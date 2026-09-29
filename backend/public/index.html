@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>مدير المهام</title>
+<style>
+  body { font-family: Tahoma, Arial, sans-serif; background: #f1f5f9; margin: 0; padding: 30px 12px; }
+  .box { max-width: 520px; margin: auto; background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,.08); }
+  h1 { margin-top: 0; text-align: center; color: #1e293b; }
+  form { display: flex; gap: 8px; }
+  input[type=text] { flex: 1; padding: 10px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 16px; }
+  button { padding: 10px 16px; border: 0; border-radius: 8px; background: #2563eb; color: #fff; cursor: pointer; font-size: 15px; }
+  button.del { background: #dc2626; padding: 6px 10px; }
+  button.edit { background: #64748b; padding: 6px 10px; }
+  ul { list-style: none; padding: 0; margin: 20px 0 0; }
+  li { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid #e2e8f0; }
+  li span { flex: 1; }
+  li.done span { text-decoration: line-through; color: #94a3b8; }
+  .empty { text-align: center; color: #94a3b8; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>📝 مدير المهام</h1>
+  <form id="form">
+    <input type="text" id="title" placeholder="اكتب مهمة جديدة..." required>
+    <button type="submit">إضافة</button>
+  </form>
+  <ul id="list"></ul>
+</div>
+<script>
+const API = '/api/tasks';
+const list = document.getElementById('list');
+
+async function load() {
+  const tasks = await (await fetch(API)).json();
+  list.innerHTML = tasks.length ? '' : '<p class="empty">لا توجد مهام بعد</p>';
+  tasks.forEach((t) => {
+    const li = document.createElement('li');
+    if (t.done) li.className = 'done';
+    li.innerHTML = `<input type="checkbox" ${t.done ? 'checked' : ''}><span></span>
+      <button class="edit">تعديل</button><button class="del">حذف</button>`;
+    li.querySelector('span').textContent = t.title;
+    li.querySelector('input').onchange = (e) => update(t.id, { done: e.target.checked });
+    li.querySelector('.edit').onclick = () => {
+      const title = prompt('عدّل المهمة', t.title);
+      if (title && title.trim()) update(t.id, { title });
+    };
+    li.querySelector('.del').onclick = async () => { await fetch(`${API}/${t.id}`, { method: 'DELETE' }); load(); };
+    list.appendChild(li);
+  });
+}
+
+async function update(id, data) {
+  await fetch(`${API}/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+  load();
+}
+
+document.getElementById('form').onsubmit = async (e) => {
+  e.preventDefault();
+  const input = document.getElementById('title');
+  await fetch(API, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: input.value }) });
+  input.value = '';
+  load();
+};
+load();
+</script>
+</body>
+</html>

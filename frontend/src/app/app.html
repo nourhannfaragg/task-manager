@@ -1,0 +1,21 @@
+<div class="box">
+  <h1>📝 Task Manger </h1>
+
+  <form (ngSubmit)="add()">
+    <input type="text" name="title" [(ngModel)]="newTitle" placeholder="اكتب مهمة جديدة..." required>
+    <button type="submit" class="add">إضافة</button>
+  </form>
+
+  <ul>
+    @for (t of tasks(); track t.id) {
+      <li [class.done]="t.done">
+        <input type="checkbox" [checked]="t.done" (change)="toggle(t)">
+        <span>{{ t.title }}</span>
+        <button class="edit" (click)="edit(t)">تعديل</button>
+        <button class="del" (click)="remove(t)">حذف</button>
+      </li>
+    } @empty {
+      <p class="empty">لا توجد مهام بعد</p>
+    }
+  </ul>
+</div>
